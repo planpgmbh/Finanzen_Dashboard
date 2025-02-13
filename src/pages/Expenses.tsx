@@ -157,6 +157,24 @@ export function Expenses() {
   const totalNetto = filteredExpenses.reduce((sum, expense) => sum + expense.total_cost, 0);
   const totalBrutto = totalNetto * 1.19;
 
+  const handleSaveExpense = async (updatedExpense: Expense) => {
+    try {
+      // Update the expense in the list
+      const updatedExpenses = expenses.map(expense => 
+        expense.id === updatedExpense.id ? updatedExpense : expense
+      );
+      
+      setExpenses(updatedExpenses);
+      setEditingExpense(null);
+      
+      // Reload expenses to ensure we have the latest data
+      await loadExpenses(fromDate, toDate, false);
+    } catch (error) {
+      console.error('Error saving expense:', error);
+      throw error;
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
@@ -337,10 +355,7 @@ export function Expenses() {
       {editingExpense && (
         <EditExpenseModal
           expense={editingExpense}
-          onSave={async (updatedExpense) => {
-            setEditingExpense(null);
-            await loadExpenses(fromDate, toDate, false);
-          }}
+          onSave={handleSaveExpense}
           onClose={() => setEditingExpense(null)}
         />
       )}

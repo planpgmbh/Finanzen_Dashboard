@@ -180,7 +180,7 @@ export function Dashboard() {
         const invoiceDate = parseISO(invoice.issue_date);
         if (invoiceDate.getFullYear() === month.getFullYear() && 
             invoiceDate.getMonth() === month.getMonth()) {
-          // Berechne den Nettobetrag: amount - tax
+          // Calculate net amount: amount - tax
           return sum + (invoice.amount - (invoice.tax_amount || 0));
         }
         return sum;
@@ -201,14 +201,20 @@ export function Dashboard() {
   const currentPeriodLabel = `${format(currentStartDate, 'dd.MM.yyyy')} - ${format(currentEndDate, 'dd.MM.yyyy')}`;
   const comparisonPeriodLabel = `${format(comparisonStartDate, 'dd.MM.yyyy')} - ${format(comparisonEndDate, 'dd.MM.yyyy')}`;
 
-  // Calculate total costs
+  // Calculate total costs based on whether a client is selected
   const totalInvoices = filteredInvoices.reduce((sum, invoice) => sum + (invoice.amount - (invoice.tax_amount || 0)), 0);
   const totalExpenses = filteredExpenses.reduce((sum, expense) => sum + expense.total_cost, 0);
   const totalComparisonInvoices = filteredComparisonInvoices.reduce((sum, invoice) => sum + (invoice.amount - (invoice.tax_amount || 0)), 0);
   const totalComparisonExpenses = filteredComparisonExpenses.reduce((sum, expense) => sum + expense.total_cost, 0);
 
-  const totalCosts = totalExpenses + runningCosts + personnelCosts;
-  const totalComparisonCosts = totalComparisonExpenses + comparisonRunningCosts + comparisonPersonnelCosts;
+  // Only include running costs and personnel costs if no client is selected
+  const totalCosts = selectedClient 
+    ? totalExpenses 
+    : totalExpenses + runningCosts + personnelCosts;
+
+  const totalComparisonCosts = selectedClient
+    ? totalComparisonExpenses
+    : totalComparisonExpenses + comparisonRunningCosts + comparisonPersonnelCosts;
 
   const expectedResult = totalInvoices - totalCosts;
   const expectedComparisonResult = totalComparisonInvoices - totalComparisonCosts;
@@ -298,7 +304,7 @@ export function Dashboard() {
               : null
           }
           inversePercentageColors
-          tooltip={{
+          tooltip={selectedClient ? undefined : {
             title: 'Aufschlüsselung der Gesamtkosten',
             items: [
               { label: 'Ausgaben', currentValue: formatCurrency(totalExpenses), comparisonValue: formatCurrency(totalComparisonExpenses) },
