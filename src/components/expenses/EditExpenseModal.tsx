@@ -13,16 +13,21 @@ interface EditExpenseModalProps {
 export function EditExpenseModal({ expense, onSave, onClose }: EditExpenseModalProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [categories, setCategories] = useState<ExpenseCategory[]>([]);
-  const [projectId, setProjectId] = useState(expense.project.id);
-  const [categoryId, setCategoryId] = useState(expense.expense_category.id);
-  const [notes, setNotes] = useState(expense.notes);
-  const [totalCost, setTotalCost] = useState(expense.total_cost);
-  const [spentDate, setSpentDate] = useState(expense.spent_date);
+  const [projectId, setProjectId] = useState(expense?.project?.id);
+  const [categoryId, setCategoryId] = useState(expense?.expense_category?.id);
+  const [notes, setNotes] = useState(expense?.notes || '');
+  const [totalCost, setTotalCost] = useState(expense?.total_cost || 0);
+  const [spentDate, setSpentDate] = useState(expense?.spent_date || '');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!expense) {
+      onClose();
+      return;
+    }
+
     const loadData = async () => {
       try {
         const [projectsData, categoriesData] = await Promise.all([
@@ -40,10 +45,12 @@ export function EditExpenseModal({ expense, onSave, onClose }: EditExpenseModalP
     };
 
     loadData();
-  }, []);
+  }, [expense, onClose]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!expense) return;
+
     setError(null);
     setSaving(true);
 
@@ -65,6 +72,10 @@ export function EditExpenseModal({ expense, onSave, onClose }: EditExpenseModalP
       setSaving(false);
     }
   };
+
+  if (!expense) {
+    return null;
+  }
 
   const harvestUrl = `https://ppgmbh.harvestapp.com/expenses/people/${expense.user.id}?expense_id=${expense.id}#expense_${expense.id}`;
 

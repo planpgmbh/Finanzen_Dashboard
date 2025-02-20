@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, Edit2, Copy, Trash2 } from 'lucide-react';
 import { Employee } from '../../types/personnel';
 import { MonthlyDataTable } from './MonthlyDataTable';
@@ -27,8 +27,31 @@ export function EmployeeRow({
   const [loading, setLoading] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
-  useEffect(() => {
-    // Load total costs immediately
+  const loadMonthlyData = async () => {
+    if (!isExpanded || monthlyData.length > 0) return;
+    
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('personnel_monthly_data')
+        .select('*')
+        .eq('global_employee_id', employee.id)
+        .eq('year_id', yearId)
+        .order('month');
+
+      if (error) throw error;
+      if (data) {
+        setMonthlyData(data);
+      }
+    } catch (error) {
+      console.error('Error loading monthly data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load total costs when component mounts
+  React.useEffect(() => {
     const fetchTotalCost = async () => {
       const { data, error } = await supabase
         .from('employee_yearly_costs')
@@ -45,31 +68,40 @@ export function EmployeeRow({
     fetchTotalCost();
   }, [employee.id, yearId]);
 
-  // Load detail data only when dropdown is opened
-  useEffect(() => {
-    if (isExpanded && !monthlyData.length) {
-      const fetchMonthlyData = async () => {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from('personnel_monthly_data')
-          .select('*')
-          .eq('global_employee_id', employee.id)
-          .eq('year_id', yearId)
-          .order('month');
-
-        if (!error && data) {
-          setMonthlyData(data);
-        }
-        setLoading(false);
-      };
-
-      fetchMonthlyData();
-    }
-  }, [isExpanded, employee.id, yearId]);
+  // Load detail data when dropdown is opened
+  React.useEffect(() => {
+    loadMonthlyData();
+  }, [isExpanded]);
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowEditModal(true);
+  };
+
+  const handleSaveEmployee = async (updatedEmployee: Employee) => {
+    try {
+      // Update local state
+      setMonthlyData(updatedEmployee.monthlyData);
+      
+      // Fetch updated total cost
+      const { data, error } = await supabase
+        .from('employee_yearly_costs')
+        .select('yearly_cost')
+        .eq('employee_id', employee.id)
+        .eq('year_id', yearId)
+        .single();
+
+      if (!error && data) {
+        setTotalCost(data.yearly_cost);
+      }
+
+      // Call parent's onEdit callback
+      await onEdit(yearId, employee.id);
+      setShowEditModal(false);
+    } catch (error) {
+      console.error('Error saving employee:', error);
+      throw error;
+    }
   };
 
   return (
@@ -134,12 +166,12 @@ export function EmployeeRow({
 
       {showEditModal && (
         <EditEmployeeModal
-          employee={employee}
-          yearId={yearId}
-          onSave={async (updatedEmployee) => {
-            await onEdit(yearId, employee.id);
-            setShowEditModal(false);
+          employee={{
+            ...employee,
+            monthlyData: monthlyData
           }}
+          yearId={yearId}
+          onSave={handleSaveEmployee}
           onClose={() => setShowEditModal(false)}
         />
       )}

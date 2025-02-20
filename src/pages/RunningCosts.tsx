@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { YearSection } from '../components/expenses/YearSection';
 import { EditYearModal } from '../components/personnel/EditYearModal';
-import { EditExpenseModal } from '../components/expenses/EditExpenseModal';
+import { RunningCostEditModal } from '../components/expenses/RunningCostEditModal';
 import { runningCostsService } from '../services/runningCostsService';
 import type { YearData, RunningCost } from '../types/runningCosts';
 import { AlertCircle } from 'lucide-react';
@@ -86,7 +86,7 @@ export function RunningCosts() {
   const handleEditExpense = (yearId: string, expenseId: string) => {
     const year = years.find(y => y.id === yearId);
     const expense = year?.costs.find(c => c.id === expenseId);
-    if (expense) {
+    if (year && expense) {
       setEditingExpense({ yearId, expense });
     }
   };
@@ -195,7 +195,7 @@ export function RunningCosts() {
       )}
 
       {editingExpense && (
-        <EditExpenseModal
+        <RunningCostEditModal
           expense={editingExpense.expense}
           onSave={(updatedExpense) => handleSaveExpense(editingExpense.yearId, updatedExpense)}
           onClose={() => setEditingExpense(null)}

@@ -30,7 +30,7 @@ const baseSelectStyles = `
   border border-gray-200 dark:border-gray-600
   rounded-lg
   focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800
-  text-gray-900 dark:text-gray-100
+  text-gray-900 dark:text-white
   disabled:bg-gray-50 dark:disabled:bg-gray-800
   disabled:text-gray-500 dark:disabled:text-gray-400
   disabled:border-gray-200 dark:disabled:border-gray-700
@@ -43,7 +43,7 @@ const baseInputStyles = `
   border border-gray-200 dark:border-gray-600
   rounded-lg
   focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800
-  text-gray-900 dark:text-gray-100
+  text-gray-900 dark:text-white
   disabled:bg-gray-50 dark:disabled:bg-gray-800
   disabled:text-gray-500 dark:disabled:text-gray-400
   disabled:border-gray-200 dark:disabled:border-gray-700
@@ -235,7 +235,7 @@ export function DateRangeFilter({
 
               {/* Comparison period selection */}
               <div className="flex items-center gap-2 ml-auto">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Vergleichen mit:</span>
+                <span className="text-sm text-gray-600 dark:text-gray-300">Vergleichen mit:</span>
                 <SelectWrapper>
                   <select
                     value={showComparison ? (comparisonYear || '') : ''}

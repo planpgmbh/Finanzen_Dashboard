@@ -3,6 +3,7 @@ import { TopLevelDropdown } from '../TopLevelDropdown';
 import { EmployeeRow } from './EmployeeRow';
 import { formatCurrency } from '../../utils/format';
 import type { YearData } from '../../types/personnel';
+import { supabase } from '../../lib/supabase';
 
 interface YearSectionProps {
   yearData: YearData;
@@ -29,6 +30,7 @@ export function YearSection({
   defaultExpanded = false
 }: YearSectionProps) {
   const [isExpanded, setIsExpanded] = React.useState(defaultExpanded);
+  const [totalCost, setTotalCost] = React.useState(yearData.totalCost);
 
   const handleDuplicateYear = async () => {
     const nextYear = yearData.year + 1;
@@ -45,6 +47,21 @@ export function YearSection({
     onToggle(newExpandedState);
   };
 
+  const handleEditEmployee = async (yearId: string, employeeId: string) => {
+    await onEditEmployee(yearId, employeeId);
+    
+    // Update total cost after employee edit
+    const { data, error } = await supabase
+      .from('total_yearly_costs')
+      .select('total_cost')
+      .eq('year_id', yearId)
+      .single();
+
+    if (!error && data) {
+      setTotalCost(data.total_cost);
+    }
+  };
+
   return (
     <TopLevelDropdown
       title={yearData.year.toString()}
@@ -52,7 +69,7 @@ export function YearSection({
       onToggle={handleToggle}
       onDuplicate={handleDuplicateYear}
       onDelete={() => onDeleteYear(yearData.id)}
-      value={formatCurrency(yearData.totalCost)}
+      value={formatCurrency(totalCost)}
     >
       <div className="space-y-2">
         {yearData.employees?.map((employee) => (
@@ -60,7 +77,7 @@ export function YearSection({
             key={employee.id}
             employee={employee}
             yearId={yearData.id}
-            onEdit={onEditEmployee}
+            onEdit={handleEditEmployee}
             onDuplicate={onDuplicateEmployee}
             onDelete={onDeleteEmployee}
           />

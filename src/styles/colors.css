@@ -1,27 +1,67 @@
 @layer base {
   :root {
+    /* Primärfarben */
     --color-primary: theme('colors.blue.600');
     --color-primary-hover: theme('colors.blue.700');
     --color-primary-dark: theme('colors.blue.500');
     --color-primary-dark-hover: theme('colors.blue.600');
     
+    /* Text */
     --color-text: theme('colors.gray.900');
     --color-text-dark: theme('colors.gray.100');
     --color-text-muted: theme('colors.gray.500');
     --color-text-muted-dark: theme('colors.gray.400');
     
+    /* Hintergründe */
     --color-background: theme('colors.white');
     --color-background-dark: theme('colors.gray.800');
     --color-background-hover: theme('colors.gray.50');
     --color-background-hover-dark: theme('colors.gray.700');
     
+    /* Rahmen */
     --color-border: theme('colors.gray.200');
     --color-border-dark: theme('colors.gray.700');
 
-    /* Scrollbar colors */
+    /* Scrollbar */
     --color-scrollbar-track: theme('colors.gray.100');
     --color-scrollbar-thumb: theme('colors.gray.300');
     --color-scrollbar-track-dark: theme('colors.gray.800');
     --color-scrollbar-thumb-dark: theme('colors.gray.600');
+  }
+}
+
+/* Scrollbar-Anpassungen */
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track);
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb);
+    border-radius: 6px;
+    border: 3px solid var(--color-scrollbar-track);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.gray.400');
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background: var(--color-scrollbar-track-dark);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: var(--color-scrollbar-thumb-dark);
+    border: 3px solid var(--color-scrollbar-track-dark);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.gray.500');
   }
 }

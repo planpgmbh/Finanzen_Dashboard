@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
-import { Employee, MonthlyData } from '../../types/personnel';
-import { formatCurrency } from '../../utils/format';
+import type { Employee, MonthlyData } from '../../types/personnel';
 import { supabase } from '../../lib/supabase';
 
 interface EditEmployeeModalProps {
@@ -11,44 +10,11 @@ interface EditEmployeeModalProps {
   onClose: () => void;
 }
 
-const MONTHS = [
-  'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-  'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
-];
-
-const createEmptyMonthlyData = (month: number, year: number): MonthlyData => ({
-  month,
-  year,
-  grundgehalt: 0,
-  krankenversicherung: 0,
-  rentenversicherung: 0,
-  arbeitslosenversicherung: 0,
-  pflegeversicherung: 0,
-  insolvenzgeldumlage: 0,
-  umlageU1: 0,
-  umlageU2: 0
-});
-
 export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmployeeModalProps) {
   const [name, setName] = useState(employee.name);
-  const [monthlyData, setMonthlyData] = useState<MonthlyData[]>(() => {
-    // Ensure we have 12 months of data
-    const data = [...employee.monthlyData];
-    while (data.length < 12) {
-      data.push(createEmptyMonthlyData(data.length + 1, employee.monthlyData[0]?.year || new Date().getFullYear()));
-    }
-    return data.slice(0, 12).sort((a, b) => a.month - b.month);
-  });
-  const [activeMonth, setActiveMonth] = useState(0);
+  const [monthlyData, setMonthlyData] = useState(employee.monthlyData);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleDataChange = (field: keyof MonthlyData, value: string) => {
-    const numValue = parseFloat(value) || 0;
-    setMonthlyData(prev => prev.map((data, idx) => 
-      idx === activeMonth ? { ...data, [field]: numValue } : data
-    ));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,13 +54,15 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
         if (monthlyError) throw monthlyError;
       }
 
-      const updatedEmployee = {
+      // Create updated employee object with new data
+      const updatedEmployee: Employee = {
         ...employee,
         name,
-        monthlyData
+        monthlyData: [...monthlyData]
       };
 
       await onSave(updatedEmployee);
+      onClose();
     } catch (error) {
       console.error('Error saving employee:', error);
       setError(error instanceof Error ? error.message : 'Failed to save employee');
@@ -102,6 +70,15 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
       setSaving(false);
     }
   };
+
+  const handleMonthlyDataChange = (field: keyof MonthlyData, value: string) => {
+    const numValue = parseFloat(value) || 0;
+    setMonthlyData(prev => prev.map(data => 
+      data.month === activeMonth + 1 ? { ...data, [field]: numValue } : data
+    ));
+  };
+
+  const [activeMonth, setActiveMonth] = useState(0);
 
   const copyToAllMonths = () => {
     const currentData = monthlyData[activeMonth];
@@ -158,7 +135,10 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     onChange={(e) => setActiveMonth(parseInt(e.target.value))}
                     className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   >
-                    {MONTHS.map((month, idx) => (
+                    {[
+                      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
+                    ].map((month, idx) => (
                       <option key={month} value={idx}>{month}</option>
                     ))}
                   </select>
@@ -181,7 +161,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.grundgehalt || 0}
-                    onChange={(e) => handleDataChange('grundgehalt', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('grundgehalt', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -193,7 +173,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.krankenversicherung || 0}
-                    onChange={(e) => handleDataChange('krankenversicherung', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('krankenversicherung', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -205,7 +185,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.rentenversicherung || 0}
-                    onChange={(e) => handleDataChange('rentenversicherung', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('rentenversicherung', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -217,7 +197,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.arbeitslosenversicherung || 0}
-                    onChange={(e) => handleDataChange('arbeitslosenversicherung', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('arbeitslosenversicherung', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -229,7 +209,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.pflegeversicherung || 0}
-                    onChange={(e) => handleDataChange('pflegeversicherung', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('pflegeversicherung', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -241,7 +221,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.insolvenzgeldumlage || 0}
-                    onChange={(e) => handleDataChange('insolvenzgeldumlage', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('insolvenzgeldumlage', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -253,7 +233,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.umlageU1 || 0}
-                    onChange={(e) => handleDataChange('umlageU1', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('umlageU1', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
@@ -265,7 +245,7 @@ export function EditEmployeeModal({ employee, yearId, onSave, onClose }: EditEmp
                     type="number"
                     step="0.01"
                     value={monthlyData[activeMonth]?.umlageU2 || 0}
-                    onChange={(e) => handleDataChange('umlageU2', e.target.value)}
+                    onChange={(e) => handleMonthlyDataChange('umlageU2', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                 </div>
